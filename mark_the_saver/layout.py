@@ -4,6 +4,7 @@ from dash import dcc, html
 
 from .config import HERO_COPY, TITLE_TEXT
 from .controls import build_control_panel
+from .kelly_profile import build_kelly_profile
 
 
 def build_layout() -> html.Div:
@@ -38,5 +39,6 @@ def build_layout() -> html.Div:
                 ],
                 type="default",
             ),
+            build_kelly_profile(),
         ],
     )
