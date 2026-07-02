@@ -29,7 +29,7 @@ def _summary_box(label: str, value: str, *, muted: bool = False) -> html.Div:
     )
 
 
-def _build_plane_figure(cost: float, effect: float) -> go.Figure:
+def _build_plane_figure(cost: float, effect: float, blend_label: str) -> go.Figure:
     high = max(cost, effect) * 1.2
     high = max(2.5, round(high + 0.2, 1))
     ticks = [round(value, 1) for value in np.arange(0.0, high + 0.001, 0.5)]
@@ -55,10 +55,10 @@ def _build_plane_figure(cost: float, effect: float) -> go.Figure:
             x=[cost],
             y=[effect],
             mode="markers+text",
-            text=["Kelly blend"],
+            text=[blend_label],
             textposition="top center",
             marker=dict(size=18, color="#edf5f9", symbol="circle", line=dict(color="#081018", width=1.5)),
-            hovertemplate=f"Kelly blend<br>Cost: {_percent(cost)}<br>Effect: {_percent(effect)}<extra></extra>",
+            hovertemplate=f"{blend_label}<br>Cost: {_percent(cost)}<br>Effect: {_percent(effect)}<extra></extra>",
             showlegend=False,
         )
     )
@@ -102,9 +102,13 @@ def build_cost_effectiveness_plane() -> html.Div:
     combined_arithmetic = round(profile_data.combined.arithmetic * 100.0, 1)
     combined_geometric = round(profile_data.combined.geometric * 100.0, 1)
 
+    dice_pct = round(profile_data.dice_weight * 100.0)
+    cash_pct = round(profile_data.cash_weight * 100.0)
+    blend_label = f"{dice_pct}% dice / {cash_pct}% cash"
+
     cost = dice_arithmetic - combined_arithmetic
     effect = combined_geometric - dice_geometric
-    figure = _build_plane_figure(cost, effect)
+    figure = _build_plane_figure(cost, effect, blend_label)
 
     return html.Div(
         className="plane-panel",
@@ -132,9 +136,9 @@ def build_cost_effectiveness_plane() -> html.Div:
                             ),
                             html.Div(
                                 [
-                                    html.Div("Strategy: 40% dice / 60% cash", className="plane-card-title"),
+                                    html.Div(f"Strategy: {blend_label}", className="plane-card-title"),
                                     html.Div([_summary_box("Arithmetic", _percent_points(combined_arithmetic)), _summary_box("Geometric", _percent_points(combined_geometric))], className="plane-card-chip-grid"),
-                                    html.Div("Kelly blend used for the plotted point", className="plane-card-footer"),
+                                    html.Div("Risk-mitigated blend used for the plotted point", className="plane-card-footer"),
                                 ],
                                 className="plane-card plane-card--blend",
                             ),

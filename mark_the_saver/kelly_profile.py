@@ -91,7 +91,7 @@ def _top_summary(title: str, arithmetic: float, geometric: float | None) -> html
     )
 
 
-def _combined_summary(arithmetic: float, geometric: float, delta_arithmetic: float, delta_geometric: float) -> html.Div:
+def _combined_summary(arithmetic: float, geometric: float, delta_arithmetic: float, delta_geometric: float, caption: str) -> html.Div:
     return html.Div(
         [
             html.Div(
@@ -101,7 +101,7 @@ def _combined_summary(arithmetic: float, geometric: float, delta_arithmetic: flo
                 ],
                 className="kelly-summary-grid",
             ),
-            html.Div("40% bet / 60% cash vs Dice Roll", className="kelly-summary-caption kelly-summary-caption--tight"),
+            html.Div(caption, className="kelly-summary-caption kelly-summary-caption--tight"),
             html.Div(
                 [
                     _summary_box("Cost", _percent(delta_arithmetic)),
@@ -125,13 +125,17 @@ def build_kelly_profile() -> html.Div:
     delta_arithmetic = combined_arithmetic - dice_arithmetic
     delta_geometric = combined_geometric - dice_geometric
 
+    dice_pct = round(kelly_data.dice_weight * 100.0)
+    cash_pct = round(kelly_data.cash_weight * 100.0)
+    blend_caption = f"{dice_pct}% bet / {cash_pct}% cash vs Dice Roll"
+
     return html.Div(
         className="kelly-panel",
         children=[
             html.Div(
                 [
                     html.Div(KELLY_SECTION_TITLE, className="kelly-eyebrow"),
-                    html.H2("Kelly blend, path by path", className="kelly-title"),
+                    html.H2("Risk-mitigated blend, path by path", className="kelly-title"),
                     html.P(KELLY_SECTION_COPY, className="kelly-copy"),
                 ],
                 className="kelly-header",
@@ -174,7 +178,7 @@ def build_kelly_profile() -> html.Div:
                         config={"displayModeBar": False},
                         className="kelly-row-figure",
                     ),
-                    _combined_summary(kelly_data.combined.arithmetic, kelly_data.combined.geometric, delta_arithmetic / 100.0, delta_geometric / 100.0),
+                    _combined_summary(kelly_data.combined.arithmetic, kelly_data.combined.geometric, delta_arithmetic / 100.0, delta_geometric / 100.0, blend_caption),
                 ],
                 className="kelly-row",
             ),

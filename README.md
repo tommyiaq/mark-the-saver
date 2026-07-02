@@ -30,9 +30,10 @@ The code is split so each module has one job:
 - `mark_the_saver/figures.py` - Plotly figure construction
 - `mark_the_saver/controls.py` - control panel widgets
 - `mark_the_saver/layout.py` - overall page layout
+- `mark_the_saver/allocation_analysis.py` - allocation sweep panel (optimal bet size)
 - `mark_the_saver/kelly_profile.py` - Kelly criterion Xs and Os panel
 - `mark_the_saver/cost_effectiveness_plane.py` - dice-baseline cost-effectiveness plane
-- `mark_the_saver/kelly_analysis.py` - shared Kelly formulas and comparison data
+- `mark_the_saver/kelly_analysis.py` - shared Kelly/allocation formulas and comparison data
 - `mark_the_saver/metrics.py` - metric card rendering
 - `mark_the_saver/callbacks.py` - Dash callback registration and dashboard updates
 - `assets/styles.css` - visual styling
@@ -47,8 +48,10 @@ The dashboard is intentionally aligned with the safe-haven / compounding lens us
 
 The Kelly criterion is the first chart-level idea to keep in view when reading the book's path-dependent argument: the question is not just whether a bet has positive arithmetic edge, but whether it improves long-run geometric growth on the realized path.
 
-The lower Kelly panel now mirrors the book's Xs and Os profile with the investing row, the cash row, and the combined 40% dice / 60% cash row.
+The allocation analysis panel sweeps the stake on the dice bet and plots the median and 5th-percentile ending wealth for every allocation. The strategy is sized to maximize the 5th percentile subject to the book's cap (the cash/risk-mitigation allocation may not exceed 50%): here the unconstrained optimum would hold 93.5% cash, so the cap binds and the selected stake is 50% dice / 50% cash.
 
-The cost-effectiveness plane below it uses the dice strategy as the baseline and plots a single Kelly-blend point against that reference, with cost and effect shown as deltas relative to dice rather than SPX.
+The Kelly panel below mirrors the book's Xs and Os profile with the investing row, the cash row, and the combined row at that selected stake.
+
+The cost-effectiveness plane uses the dice strategy as the baseline and plots the same blend as a cost/effect point relative to dice rather than SPX.
 
 That makes the project easier to use as a reference when exploring path dependence, compounding, and downside protection.
