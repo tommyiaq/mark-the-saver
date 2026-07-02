@@ -4,8 +4,8 @@ import numpy as np
 import plotly.graph_objects as go
 from dash import dcc, html
 
-from .config import KELLY_SECTION_COPY, KELLY_SECTION_TITLE
-from .kelly_analysis import build_kelly_profile_data
+from .config import XO_SECTION_COPY, XO_SECTION_TITLE
+from .mitigation_analysis import build_blend_profile_data
 
 
 OUTCOME_LABELS = ("-50%", "+5%", "+50%")
@@ -63,13 +63,13 @@ def _build_profile_figure(title: str, returns_pct: np.ndarray, marker_symbol: st
 
 
 def _summary_box(label: str, value: str, *, muted: bool = False) -> html.Div:
-    classes = ["kelly-summary-box"]
+    classes = ["xo-summary-box"]
     if muted:
-        classes.append("kelly-summary-box--muted")
+        classes.append("xo-summary-box--muted")
     return html.Div(
         [
-            html.Div(label, className="kelly-summary-label"),
-            html.Div(value, className="kelly-summary-value"),
+            html.Div(label, className="xo-summary-label"),
+            html.Div(value, className="xo-summary-value"),
         ],
         className=" ".join(classes),
     )
@@ -83,11 +83,11 @@ def _top_summary(title: str, arithmetic: float, geometric: float | None) -> html
                     _summary_box("Arithm Avg", _percent(arithmetic)),
                     _summary_box("Geom Avg", _percent(geometric) if geometric is not None else "", muted=geometric is None),
                 ],
-                className="kelly-summary-grid",
+                className="xo-summary-grid",
             ),
-            html.Div(title, className="kelly-summary-caption"),
+            html.Div(title, className="xo-summary-caption"),
         ],
-        className="kelly-summary-stack",
+        className="xo-summary-stack",
     )
 
 
@@ -99,88 +99,88 @@ def _combined_summary(arithmetic: float, geometric: float, delta_arithmetic: flo
                     _summary_box("Arithm Avg", _percent(arithmetic)),
                     _summary_box("Geom Avg", _percent(geometric)),
                 ],
-                className="kelly-summary-grid",
+                className="xo-summary-grid",
             ),
-            html.Div(caption, className="kelly-summary-caption kelly-summary-caption--tight"),
+            html.Div(caption, className="xo-summary-caption xo-summary-caption--tight"),
             html.Div(
                 [
                     _summary_box("Cost", _percent(delta_arithmetic)),
                     _summary_box("Net", _percent(delta_geometric)),
                 ],
-                className="kelly-summary-grid",
+                className="xo-summary-grid",
             ),
         ],
-        className="kelly-summary-stack",
+        className="xo-summary-stack",
     )
 
 
-def build_kelly_profile() -> html.Div:
-    kelly_data = build_kelly_profile_data()
+def build_xo_profile() -> html.Div:
+    blend_data = build_blend_profile_data()
 
-    dice_arithmetic = round(kelly_data.dice.arithmetic * 100.0, 1)
-    dice_geometric = round(kelly_data.dice.geometric * 100.0, 1)
-    combined_arithmetic = round(kelly_data.combined.arithmetic * 100.0, 1)
-    combined_geometric = round(kelly_data.combined.geometric * 100.0, 1)
+    dice_arithmetic = round(blend_data.dice.arithmetic * 100.0, 1)
+    dice_geometric = round(blend_data.dice.geometric * 100.0, 1)
+    combined_arithmetic = round(blend_data.combined.arithmetic * 100.0, 1)
+    combined_geometric = round(blend_data.combined.geometric * 100.0, 1)
 
     delta_arithmetic = combined_arithmetic - dice_arithmetic
     delta_geometric = combined_geometric - dice_geometric
 
-    dice_pct = round(kelly_data.dice_weight * 100.0)
-    cash_pct = round(kelly_data.cash_weight * 100.0)
+    dice_pct = round(blend_data.dice_weight * 100.0)
+    cash_pct = round(blend_data.cash_weight * 100.0)
     blend_caption = f"{dice_pct}% bet / {cash_pct}% cash vs Dice Roll"
 
     return html.Div(
-        className="kelly-panel",
+        className="xo-panel",
         children=[
             html.Div(
                 [
-                    html.Div(KELLY_SECTION_TITLE, className="kelly-eyebrow"),
-                    html.H2("Risk-mitigated blend, path by path", className="kelly-title"),
-                    html.P(KELLY_SECTION_COPY, className="kelly-copy"),
+                    html.Div(XO_SECTION_TITLE, className="xo-eyebrow"),
+                    html.H2("Risk-mitigated blend, path by path", className="xo-title"),
+                    html.P(XO_SECTION_COPY, className="xo-copy"),
                 ],
-                className="kelly-header",
+                className="xo-header",
             ),
             html.Div(
                 [
-                    html.Div("Investing", className="kelly-row-label"),
+                    html.Div("Investing", className="xo-row-label"),
                     dcc.Graph(
                         figure=_build_profile_figure(
-                            "", kelly_data.dice.returns_pct, DICE_MARKER, (-60, 60), [-50, 0, 50]
+                            "", blend_data.dice.returns_pct, DICE_MARKER, (-60, 60), [-50, 0, 50]
                         ),
                         config={"displayModeBar": False},
-                        className="kelly-row-figure",
+                        className="xo-row-figure",
                     ),
-                    _top_summary("Dice roll distribution", kelly_data.dice.arithmetic, kelly_data.dice.geometric),
+                    _top_summary("Dice roll distribution", blend_data.dice.arithmetic, blend_data.dice.geometric),
                 ],
-                className="kelly-row",
+                className="xo-row",
             ),
             html.Div(
                 [
-                    html.Div("Risk Mitigation", className="kelly-row-label"),
+                    html.Div("Risk Mitigation", className="xo-row-label"),
                     dcc.Graph(
                         figure=_build_profile_figure(
-                            "", kelly_data.cash.returns_pct, CASH_MARKER, (-20, 20), [-20, -10, 0, 10, 20]
+                            "", blend_data.cash.returns_pct, CASH_MARKER, (-20, 20), [-20, -10, 0, 10, 20]
                         ),
                         config={"displayModeBar": False},
-                        className="kelly-row-figure",
+                        className="xo-row-figure",
                     ),
-                    _top_summary("Risk mitigation", kelly_data.cash.arithmetic, None),
+                    _top_summary("Risk mitigation", blend_data.cash.arithmetic, None),
                 ],
-                className="kelly-row",
+                className="xo-row",
             ),
             html.Div(
                 [
-                    html.Div("Combined", className="kelly-row-label kelly-row-label--combined"),
+                    html.Div("Combined", className="xo-row-label xo-row-label--combined"),
                     dcc.Graph(
                         figure=_build_profile_figure(
-                            "", kelly_data.combined.returns_pct, COMBINED_MARKER, (-50, 60), [-50, 0, 50]
+                            "", blend_data.combined.returns_pct, COMBINED_MARKER, (-50, 60), [-50, 0, 50]
                         ),
                         config={"displayModeBar": False},
-                        className="kelly-row-figure",
+                        className="xo-row-figure",
                     ),
-                    _combined_summary(kelly_data.combined.arithmetic, kelly_data.combined.geometric, delta_arithmetic / 100.0, delta_geometric / 100.0, blend_caption),
+                    _combined_summary(blend_data.combined.arithmetic, blend_data.combined.geometric, delta_arithmetic / 100.0, delta_geometric / 100.0, blend_caption),
                 ],
-                className="kelly-row",
+                className="xo-row",
             ),
         ],
     )

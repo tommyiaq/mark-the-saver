@@ -9,7 +9,7 @@ from .config import (
     MEDIAN_COLOR,
     PERCENTILE_LOW_COLOR,
 )
-from .kelly_analysis import AllocationCurve, build_allocation_curve
+from .mitigation_analysis import AllocationCurve, build_allocation_curve
 
 
 # Log-scale bounds for the ending-wealth axis (multiples of starting capital).

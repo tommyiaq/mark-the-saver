@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from dash import dcc, html
 
 from .config import COST_PLANE_COPY, COST_PLANE_TITLE
-from .kelly_analysis import build_kelly_profile_data
+from .mitigation_analysis import build_blend_profile_data
 
 
 def _percent(value: float) -> str:
@@ -96,7 +96,7 @@ def _build_plane_figure(cost: float, effect: float, blend_label: str) -> go.Figu
 
 
 def build_cost_effectiveness_plane() -> html.Div:
-    profile_data = build_kelly_profile_data()
+    profile_data = build_blend_profile_data()
     dice_arithmetic = round(profile_data.dice.arithmetic * 100.0, 1)
     dice_geometric = round(profile_data.dice.geometric * 100.0, 1)
     combined_arithmetic = round(profile_data.combined.arithmetic * 100.0, 1)

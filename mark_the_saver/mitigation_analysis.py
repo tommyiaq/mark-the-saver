@@ -7,8 +7,8 @@ import numpy as np
 
 from .config import (
     DEFAULT_THROWS,
-    KELLY_STATE_PROBABILITIES,
-    KELLY_STATE_RETURNS,
+    DICE_STATE_PROBABILITIES,
+    DICE_STATE_RETURNS,
 )
 
 # One-sided z-score for the 5th percentile of a normal distribution.
@@ -16,7 +16,7 @@ Z_5TH = 1.6448536269514722
 
 
 @dataclass(frozen=True)
-class KellyStrategyStats:
+class StrategyStats:
     label: str
     returns: np.ndarray
     returns_pct: np.ndarray
@@ -25,16 +25,16 @@ class KellyStrategyStats:
 
 
 @dataclass(frozen=True)
-class KellyProfileData:
-    dice: KellyStrategyStats
-    cash: KellyStrategyStats
-    combined: KellyStrategyStats
+class BlendProfileData:
+    dice: StrategyStats
+    cash: StrategyStats
+    combined: StrategyStats
     dice_weight: float
     cash_weight: float
 
 
 @dataclass(frozen=True)
-class KellyPlanePoint:
+class PlanePoint:
     label: str
     cost: float
     effect: float
@@ -43,11 +43,11 @@ class KellyPlanePoint:
     description: str
 
 
-def _build_stats(label: str, returns: np.ndarray, probabilities: np.ndarray) -> KellyStrategyStats:
+def _build_stats(label: str, returns: np.ndarray, probabilities: np.ndarray) -> StrategyStats:
     returns_pct = returns * 100.0
     arithmetic = float(np.sum(returns * probabilities))
     geometric = float(exp(np.sum(probabilities * np.log1p(returns))) - 1)
-    return KellyStrategyStats(
+    return StrategyStats(
         label=label,
         returns=returns,
         returns_pct=returns_pct,
@@ -56,7 +56,7 @@ def _build_stats(label: str, returns: np.ndarray, probabilities: np.ndarray) -> 
     )
 
 
-def build_kelly_profile_data(dice_weight: float | None = None) -> KellyProfileData:
+def build_blend_profile_data(dice_weight: float | None = None) -> BlendProfileData:
     """Build the dice / cash / combined profile at ``dice_weight``.
 
     When ``dice_weight`` is ``None`` the allocation defaults to the weight that
@@ -68,12 +68,12 @@ def build_kelly_profile_data(dice_weight: float | None = None) -> KellyProfileDa
         dice_weight = optimal_dice_weight()
     cash_weight = 1.0 - dice_weight
 
-    dice_returns = np.array(KELLY_STATE_RETURNS, dtype=float)
-    probabilities = np.array(KELLY_STATE_PROBABILITIES, dtype=float)
+    dice_returns = np.array(DICE_STATE_RETURNS, dtype=float)
+    probabilities = np.array(DICE_STATE_PROBABILITIES, dtype=float)
     cash_returns = np.zeros_like(dice_returns)
     combined_returns = dice_weight * dice_returns + cash_weight * cash_returns
 
-    return KellyProfileData(
+    return BlendProfileData(
         dice=_build_stats("Dice", dice_returns, probabilities),
         cash=_build_stats("Cash", cash_returns, probabilities),
         combined=_build_stats("Risk-mitigated blend", combined_returns, probabilities),
@@ -82,10 +82,10 @@ def build_kelly_profile_data(dice_weight: float | None = None) -> KellyProfileDa
     )
 
 
-def build_cost_effectiveness_points(profile_data: KellyProfileData) -> list[KellyPlanePoint]:
+def build_cost_effectiveness_points(profile_data: BlendProfileData) -> list[PlanePoint]:
     baseline = profile_data.dice
     points = [
-        KellyPlanePoint(
+        PlanePoint(
             label="Dice baseline",
             cost=0.0,
             effect=0.0,
@@ -93,7 +93,7 @@ def build_cost_effectiveness_points(profile_data: KellyProfileData) -> list[Kell
             geometric=baseline.geometric,
             description="Reference strategy",
         ),
-        KellyPlanePoint(
+        PlanePoint(
             label="Cash",
             cost=profile_data.cash.arithmetic - baseline.arithmetic,
             effect=profile_data.cash.geometric - baseline.geometric,
@@ -101,7 +101,7 @@ def build_cost_effectiveness_points(profile_data: KellyProfileData) -> list[Kell
             geometric=profile_data.cash.geometric,
             description="Risk mitigation only",
         ),
-        KellyPlanePoint(
+        PlanePoint(
             label=f"{profile_data.dice_weight * 100:.0f}% dice / {profile_data.cash_weight * 100:.0f}% cash",
             cost=profile_data.combined.arithmetic - baseline.arithmetic,
             effect=profile_data.combined.geometric - baseline.geometric,
@@ -150,8 +150,8 @@ def build_allocation_curve(steps: int = 201, mitigation_cap: float = 0.5) -> All
     portfolio, i.e. dice stake >= 50%. The unconstrained median maximum (Kelly)
     and 5th-percentile maximum (fractional Kelly) are also reported for context.
     """
-    returns = np.array(KELLY_STATE_RETURNS, dtype=float)
-    probabilities = np.array(KELLY_STATE_PROBABILITIES, dtype=float)
+    returns = np.array(DICE_STATE_RETURNS, dtype=float)
+    probabilities = np.array(DICE_STATE_PROBABILITIES, dtype=float)
     throws = DEFAULT_THROWS
     weights = np.linspace(0.0, 1.0, steps)
 

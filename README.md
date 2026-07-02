@@ -31,9 +31,10 @@ The code is split so each module has one job:
 - `mark_the_saver/controls.py` - control panel widgets
 - `mark_the_saver/layout.py` - overall page layout
 - `mark_the_saver/allocation_analysis.py` - allocation sweep panel (optimal bet size)
-- `mark_the_saver/kelly_profile.py` - Kelly criterion Xs and Os panel
+- `mark_the_saver/xo_profile.py` - Xs and Os payoff-profile panel
 - `mark_the_saver/cost_effectiveness_plane.py` - dice-baseline cost-effectiveness plane
-- `mark_the_saver/kelly_analysis.py` - shared Kelly/allocation formulas and comparison data
+- `mark_the_saver/mitigation_analysis.py` - shared allocation/blend formulas and comparison data
+- `mark_the_saver/market_data.py` - monthly returns from yfinance with local CSV cache
 - `mark_the_saver/metrics.py` - metric card rendering
 - `mark_the_saver/callbacks.py` - Dash callback registration and dashboard updates
 - `assets/styles.css` - visual styling
@@ -50,7 +51,7 @@ The Kelly criterion is the first chart-level idea to keep in view when reading t
 
 The allocation analysis panel sweeps the stake on the dice bet and plots the median and 5th-percentile ending wealth for every allocation. The strategy is sized to maximize the 5th percentile subject to the book's cap (the cash/risk-mitigation allocation may not exceed 50%): here the unconstrained optimum would hold 93.5% cash, so the cap binds and the selected stake is 50% dice / 50% cash.
 
-The Kelly panel below mirrors the book's Xs and Os profile with the investing row, the cash row, and the combined row at that selected stake.
+The Xs and Os panel below mirrors the book's payoff profile with the investing row, the cash row, and the combined row at that selected stake.
 
 The cost-effectiveness plane uses the dice strategy as the baseline and plots the same blend as a cost/effect point relative to dice rather than SPX.
 
