@@ -32,3 +32,10 @@ KELLY_SECTION_COPY = (
     "The point is the same safe-haven question: does the hedge improve the realized path, not just the average?"
 )
 
+COST_PLANE_TITLE = "The Cost-Effectiveness Plane"
+COST_PLANE_COPY = (
+    "The baseline for this version is the dice bet. Cash and the 40% dice / 60% cash Kelly blend are plotted as "
+    "cost/effect deltas relative to dice, so the question stays tied to realized compounding."
+)
+
+

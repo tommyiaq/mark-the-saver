@@ -1,19 +1,11 @@
 from __future__ import annotations
 
-from math import exp, log1p
-
 import numpy as np
 import plotly.graph_objects as go
 from dash import dcc, html
 
-from .config import (
-    KELLY_CASH_WEIGHT,
-    KELLY_DICE_WEIGHT,
-    KELLY_SECTION_COPY,
-    KELLY_SECTION_TITLE,
-    KELLY_STATE_PROBABILITIES,
-    KELLY_STATE_RETURNS,
-)
+from .config import KELLY_SECTION_COPY, KELLY_SECTION_TITLE
+from .kelly_analysis import build_kelly_profile_data
 
 
 OUTCOME_LABELS = ("-50%", "+5%", "+50%")
@@ -28,14 +20,6 @@ def _percent(value: float) -> str:
 
 def _percent_points(value: float) -> str:
     return f"{value:.1f}%"
-
-
-def _arithmetic_mean(returns: np.ndarray, probabilities: np.ndarray) -> float:
-    return float(np.sum(returns * probabilities))
-
-
-def _geometric_mean(returns: np.ndarray, probabilities: np.ndarray) -> float:
-    return float(exp(np.sum(probabilities * np.log1p(returns))) - 1)
 
 
 def _build_profile_figure(title: str, returns_pct: np.ndarray, marker_symbol: str, y_range: tuple[float, float], y_ticks: list[float]) -> go.Figure:
@@ -131,20 +115,12 @@ def _combined_summary(arithmetic: float, geometric: float, delta_arithmetic: flo
 
 
 def build_kelly_profile() -> html.Div:
-    dice_returns = np.array(KELLY_STATE_RETURNS, dtype=float)
-    probabilities = np.array(KELLY_STATE_PROBABILITIES, dtype=float)
-    cash_returns = np.zeros_like(dice_returns)
-    combined_returns = KELLY_DICE_WEIGHT * dice_returns + KELLY_CASH_WEIGHT * cash_returns
+    kelly_data = build_kelly_profile_data()
 
-    dice_returns_pct = dice_returns * 100.0
-    cash_returns_pct = cash_returns * 100.0
-    combined_returns_pct = combined_returns * 100.0
-
-    dice_arithmetic = _arithmetic_mean(dice_returns, probabilities)
-    dice_geometric = _geometric_mean(dice_returns, probabilities)
-    cash_arithmetic = _arithmetic_mean(cash_returns, probabilities)
-    combined_arithmetic = _arithmetic_mean(combined_returns, probabilities)
-    combined_geometric = _geometric_mean(combined_returns, probabilities)
+    dice_arithmetic = round(kelly_data.dice.arithmetic * 100.0, 1)
+    dice_geometric = round(kelly_data.dice.geometric * 100.0, 1)
+    combined_arithmetic = round(kelly_data.combined.arithmetic * 100.0, 1)
+    combined_geometric = round(kelly_data.combined.geometric * 100.0, 1)
 
     delta_arithmetic = combined_arithmetic - dice_arithmetic
     delta_geometric = combined_geometric - dice_geometric
@@ -165,12 +141,12 @@ def build_kelly_profile() -> html.Div:
                     html.Div("Investing", className="kelly-row-label"),
                     dcc.Graph(
                         figure=_build_profile_figure(
-                            "", dice_returns_pct, DICE_MARKER, (-60, 60), [-50, 0, 50]
+                            "", kelly_data.dice.returns_pct, DICE_MARKER, (-60, 60), [-50, 0, 50]
                         ),
                         config={"displayModeBar": False},
                         className="kelly-row-figure",
                     ),
-                    _top_summary("Dice roll distribution", dice_arithmetic, dice_geometric),
+                    _top_summary("Dice roll distribution", kelly_data.dice.arithmetic, kelly_data.dice.geometric),
                 ],
                 className="kelly-row",
             ),
@@ -179,12 +155,12 @@ def build_kelly_profile() -> html.Div:
                     html.Div("Risk Mitigation", className="kelly-row-label"),
                     dcc.Graph(
                         figure=_build_profile_figure(
-                            "", cash_returns_pct, CASH_MARKER, (-20, 20), [-20, -10, 0, 10, 20]
+                            "", kelly_data.cash.returns_pct, CASH_MARKER, (-20, 20), [-20, -10, 0, 10, 20]
                         ),
                         config={"displayModeBar": False},
                         className="kelly-row-figure",
                     ),
-                    _top_summary("Risk mitigation", cash_arithmetic, None),
+                    _top_summary("Risk mitigation", kelly_data.cash.arithmetic, None),
                 ],
                 className="kelly-row",
             ),
@@ -193,12 +169,12 @@ def build_kelly_profile() -> html.Div:
                     html.Div("Combined", className="kelly-row-label kelly-row-label--combined"),
                     dcc.Graph(
                         figure=_build_profile_figure(
-                            "", combined_returns_pct, COMBINED_MARKER, (-50, 60), [-50, 0, 50]
+                            "", kelly_data.combined.returns_pct, COMBINED_MARKER, (-50, 60), [-50, 0, 50]
                         ),
                         config={"displayModeBar": False},
                         className="kelly-row-figure",
                     ),
-                    _combined_summary(combined_arithmetic, combined_geometric, delta_arithmetic, delta_geometric),
+                    _combined_summary(kelly_data.combined.arithmetic, kelly_data.combined.geometric, delta_arithmetic / 100.0, delta_geometric / 100.0),
                 ],
                 className="kelly-row",
             ),
