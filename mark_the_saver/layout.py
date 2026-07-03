@@ -6,7 +6,7 @@ from .allocation_analysis import build_allocation_analysis
 from .config import HERO_COPY, TITLE_TEXT
 from .controls import build_control_panel
 from .cost_effectiveness_plane import build_cost_effectiveness_plane
-from .xo_profile import build_xo_profile
+from .xo_profile import build_xo_panel
 
 
 def build_layout() -> html.Div:
@@ -42,7 +42,7 @@ def build_layout() -> html.Div:
                 type="default",
             ),
             build_allocation_analysis(),
-            build_xo_profile(),
+            build_xo_panel(),
             build_cost_effectiveness_plane(),
         ],
     )

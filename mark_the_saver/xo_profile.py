@@ -4,61 +4,37 @@ import numpy as np
 import plotly.graph_objects as go
 from dash import dcc, html
 
-from .config import XO_SECTION_COPY, XO_SECTION_TITLE
-from .mitigation_analysis import build_blend_profile_data
+from .config import MEDIAN_COLOR, PERCENTILE_LOW_COLOR, XO_SECTION_COPY, XO_SECTION_TITLE
+from .mitigation_analysis import XOProfile
 
-
-OUTCOME_LABELS = ("-50%", "+5%", "+50%")
-DICE_MARKER = "x"
-CASH_MARKER = "circle-open"
-COMBINED_MARKER = "circle-x"
+COMBINED_COLOR = "#edf5f9"
 
 
 def _percent(value: float) -> str:
     return f"{value * 100:.1f}%"
 
 
-def _percent_points(value: float) -> str:
-    return f"{value:.1f}%"
-
-
-def _build_profile_figure(title: str, returns_pct: np.ndarray, marker_symbol: str, y_range: tuple[float, float], y_ticks: list[float]) -> go.Figure:
-    figure = go.Figure()
-    figure.add_trace(
-        go.Scatter(
-            x=[0, 1, 2],
-            y=returns_pct,
-            mode="lines+markers",
-            line=dict(color="rgba(225, 225, 225, 0.7)", width=2, dash="dot"),
-            marker=dict(symbol=marker_symbol, size=14, color="#edf5f9", line=dict(color="#edf5f9", width=2)),
-            hoverinfo="skip",
-            showlegend=False,
+def _bin_figure(labels: tuple[str, ...], values: np.ndarray, shares: np.ndarray, color: str) -> go.Figure:
+    figure = go.Figure(
+        go.Bar(
+            x=list(labels),
+            y=[v * 100.0 for v in values],
+            marker_color=color,
+            marker_line_width=0,
+            customdata=shares * 100.0,
+            hovertemplate="%{x}<br>mean return %{y:.1f}%<br>%{customdata:.0f}% of months<extra></extra>",
         )
     )
     figure.update_layout(
         template="plotly_dark",
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=28, r=14, t=12, b=30),
-        height=180,
-        title=dict(text=title, x=0.02, xanchor="left", y=0.98, font=dict(size=15)),
+        margin=dict(l=34, r=10, t=8, b=24),
+        height=170,
+        bargap=0.35,
     )
-    figure.update_xaxes(
-        tickmode="array",
-        tickvals=[0, 1, 2],
-        ticktext=OUTCOME_LABELS,
-        showgrid=False,
-        zeroline=False,
-    )
-    figure.update_yaxes(
-        range=list(y_range),
-        tickmode="array",
-        tickvals=y_ticks,
-        ticktext=[_percent_points(value) for value in y_ticks],
-        gridcolor="rgba(255,255,255,0.08)",
-        zeroline=False,
-        title_standoff=4,
-    )
+    figure.update_xaxes(showgrid=False, zeroline=False, tickfont=dict(size=10))
+    figure.update_yaxes(ticksuffix="%", gridcolor="rgba(255,255,255,0.08)", zeroline=True, zerolinecolor="rgba(255,255,255,0.25)", title_standoff=4)
     return figure
 
 
@@ -75,23 +51,23 @@ def _summary_box(label: str, value: str, *, muted: bool = False) -> html.Div:
     )
 
 
-def _top_summary(title: str, arithmetic: float, geometric: float | None) -> html.Div:
+def _top_summary(caption: str, arithmetic: float, geometric: float) -> html.Div:
     return html.Div(
         [
             html.Div(
                 [
                     _summary_box("Arithm Avg", _percent(arithmetic)),
-                    _summary_box("Geom Avg", _percent(geometric) if geometric is not None else "", muted=geometric is None),
+                    _summary_box("Geom Avg", _percent(geometric)),
                 ],
                 className="xo-summary-grid",
             ),
-            html.Div(title, className="xo-summary-caption"),
+            html.Div(caption, className="xo-summary-caption"),
         ],
         className="xo-summary-stack",
     )
 
 
-def _combined_summary(arithmetic: float, geometric: float, delta_arithmetic: float, delta_geometric: float, caption: str) -> html.Div:
+def _combined_summary(arithmetic: float, geometric: float, cost: float, net: float, caption: str) -> html.Div:
     return html.Div(
         [
             html.Div(
@@ -104,8 +80,8 @@ def _combined_summary(arithmetic: float, geometric: float, delta_arithmetic: flo
             html.Div(caption, className="xo-summary-caption xo-summary-caption--tight"),
             html.Div(
                 [
-                    _summary_box("Cost", _percent(delta_arithmetic)),
-                    _summary_box("Net", _percent(delta_geometric)),
+                    _summary_box("Cost", _percent(cost)),
+                    _summary_box("Net", _percent(net)),
                 ],
                 className="xo-summary-grid",
             ),
@@ -114,73 +90,60 @@ def _combined_summary(arithmetic: float, geometric: float, delta_arithmetic: flo
     )
 
 
-def build_xo_profile() -> html.Div:
-    blend_data = build_blend_profile_data()
+def _row(label: str, figure: go.Figure, summary: html.Div, *, combined: bool = False) -> html.Div:
+    label_class = "xo-row-label xo-row-label--combined" if combined else "xo-row-label"
+    return html.Div(
+        [
+            html.Div(label, className=label_class),
+            dcc.Graph(figure=figure, config={"displayModeBar": False}, className="xo-row-figure"),
+            summary,
+        ],
+        className="xo-row",
+    )
 
-    dice_arithmetic = round(blend_data.dice.arithmetic * 100.0, 1)
-    dice_geometric = round(blend_data.dice.geometric * 100.0, 1)
-    combined_arithmetic = round(blend_data.combined.arithmetic * 100.0, 1)
-    combined_geometric = round(blend_data.combined.geometric * 100.0, 1)
 
-    delta_arithmetic = combined_arithmetic - dice_arithmetic
-    delta_geometric = combined_geometric - dice_geometric
+def build_xo_body(profile: XOProfile) -> list[html.Div]:
+    stats = profile.stats
+    pair = stats.pair
+    labels = profile.bin_labels
+    shares = profile.bin_shares
+    weight_pct = round(stats.weight * 100.0)
 
-    dice_pct = round(blend_data.dice_weight * 100.0)
-    cash_pct = round(blend_data.cash_weight * 100.0)
-    blend_caption = f"{dice_pct}% bet / {cash_pct}% cash vs Dice Roll"
+    combined_caption = f"{weight_pct}% {pair.strategy_label} / {100 - weight_pct}% {pair.base_label}"
 
+    return [
+        _row(
+            "Base asset",
+            _bin_figure(labels, profile.base_bin_means, shares, MEDIAN_COLOR),
+            _top_summary(pair.base_label, stats.base_arithmetic, stats.base_geometric),
+        ),
+        _row(
+            "Risk mitigation",
+            _bin_figure(labels, profile.haven_bin_means, shares, PERCENTILE_LOW_COLOR),
+            _top_summary(pair.strategy_label, stats.haven_arithmetic, stats.haven_geometric),
+        ),
+        _row(
+            "Combined",
+            _bin_figure(labels, profile.combined_bin_means, shares, COMBINED_COLOR),
+            _combined_summary(stats.combined_arithmetic, stats.combined_geometric, stats.cost, stats.net_effect, combined_caption),
+            combined=True,
+        ),
+    ]
+
+
+def build_xo_panel() -> html.Div:
+    """Static shell; the three payoff rows are filled by the panel callback."""
     return html.Div(
         className="xo-panel",
         children=[
             html.Div(
                 [
                     html.Div(XO_SECTION_TITLE, className="xo-eyebrow"),
-                    html.H2("Risk-mitigated blend, path by path", className="xo-title"),
+                    html.H2("Payoff profile, by market bin", className="xo-title"),
                     html.P(XO_SECTION_COPY, className="xo-copy"),
                 ],
                 className="xo-header",
             ),
-            html.Div(
-                [
-                    html.Div("Investing", className="xo-row-label"),
-                    dcc.Graph(
-                        figure=_build_profile_figure(
-                            "", blend_data.dice.returns_pct, DICE_MARKER, (-60, 60), [-50, 0, 50]
-                        ),
-                        config={"displayModeBar": False},
-                        className="xo-row-figure",
-                    ),
-                    _top_summary("Dice roll distribution", blend_data.dice.arithmetic, blend_data.dice.geometric),
-                ],
-                className="xo-row",
-            ),
-            html.Div(
-                [
-                    html.Div("Risk Mitigation", className="xo-row-label"),
-                    dcc.Graph(
-                        figure=_build_profile_figure(
-                            "", blend_data.cash.returns_pct, CASH_MARKER, (-20, 20), [-20, -10, 0, 10, 20]
-                        ),
-                        config={"displayModeBar": False},
-                        className="xo-row-figure",
-                    ),
-                    _top_summary("Risk mitigation", blend_data.cash.arithmetic, None),
-                ],
-                className="xo-row",
-            ),
-            html.Div(
-                [
-                    html.Div("Combined", className="xo-row-label xo-row-label--combined"),
-                    dcc.Graph(
-                        figure=_build_profile_figure(
-                            "", blend_data.combined.returns_pct, COMBINED_MARKER, (-50, 60), [-50, 0, 50]
-                        ),
-                        config={"displayModeBar": False},
-                        className="xo-row-figure",
-                    ),
-                    _combined_summary(blend_data.combined.arithmetic, blend_data.combined.geometric, delta_arithmetic / 100.0, delta_geometric / 100.0, blend_caption),
-                ],
-                className="xo-row",
-            ),
+            html.Div(id="xo-body"),
         ],
     )

@@ -113,6 +113,147 @@ body {
   color: rgba(255, 255, 255, 0.6);
 }
 
+/* Dash 4 custom dropdown (classes: dash-dropdown-*) */
+.control-dropdown .dash-dropdown-trigger {
+  background-color: #050d14;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-family: "Segoe UI", "Aptos", sans-serif;
+  font-size: 0.96rem;
+}
+
+.control-dropdown .dash-dropdown-value,
+.control-dropdown .dash-dropdown-value-item,
+.control-dropdown .dash-dropdown-placeholder {
+  color: #ffffff;
+  font-family: "Segoe UI", "Aptos", sans-serif;
+  font-size: 0.96rem;
+}
+
+.control-dropdown .dash-dropdown-trigger-icon,
+.control-dropdown .dash-dropdown-clear {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.control-dropdown .dash-dropdown-content,
+.control-dropdown .dash-dropdown-options {
+  background-color: #0a1620;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.control-dropdown .dash-dropdown-option {
+  background-color: transparent;
+  color: #ffffff;
+  font-family: "Segoe UI", "Aptos", sans-serif;
+  font-size: 0.92rem;
+  padding: 10px 12px;
+}
+
+.control-dropdown .dash-dropdown-option:hover,
+.control-dropdown .dash-dropdown-option[aria-selected="true"] {
+  background-color: rgba(91, 192, 190, 0.18);
+}
+
+.control-dropdown .dash-dropdown-option[aria-disabled="true"] {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.control-dropdown .dash-dropdown-search,
+.control-dropdown .dash-dropdown-search-container {
+  background-color: #0a1620;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+/* The options panel may be portaled outside the wrapper; these are the only
+   dropdowns in the app, so global fallbacks are safe. */
+.dash-dropdown-content,
+.dash-dropdown-options {
+  background-color: #0a1620 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.dash-dropdown-option {
+  color: #ffffff !important;
+  font-family: "Segoe UI", "Aptos", sans-serif;
+}
+
+.dash-dropdown-option:hover,
+.dash-dropdown-option[aria-selected="true"] {
+  background-color: rgba(91, 192, 190, 0.18) !important;
+}
+
+.dash-dropdown-option[aria-disabled="true"],
+.dash-dropdown-option[data-disabled="true"] {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.control-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.control-value {
+  font-family: "Segoe UI", "Aptos", sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--accent-2);
+}
+
+.alloc-slider {
+  padding: 8px 12px 28px;
+}
+
+/* Dash 4 slider (classes: dash-slider-*) */
+.alloc-slider .dash-slider-track {
+  background-color: rgba(255, 255, 255, 0.18);
+  height: 5px;
+}
+
+.alloc-slider .dash-slider-range {
+  background-color: var(--accent-2);
+  height: 5px;
+}
+
+.alloc-slider .dash-slider-thumb {
+  background-color: #edf5f9;
+  border: 2px solid var(--accent-2);
+  width: 16px;
+  height: 16px;
+}
+
+.alloc-slider .dash-slider-dot {
+  background-color: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.alloc-slider .dash-slider-dot-outside-selection {
+  background-color: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.alloc-slider .dash-slider-mark {
+  color: rgba(237, 245, 249, 0.85);
+  font-family: "Segoe UI", "Aptos", sans-serif;
+  font-size: 0.74rem;
+}
+
+/* We show the allocation value in the label instead of the slider tooltip, so
+   hide any slider tooltip (portaled to <body>; global rule is safe here). */
+.dash-slider-tooltip {
+  display: none !important;
+}
+
 .generate-button {
   margin-top: 6px;
   padding: 15px 16px;
@@ -136,7 +277,7 @@ body {
 
 .metrics-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   margin-bottom: 18px;
 }
@@ -440,6 +581,10 @@ body {
 
 .plane-card--blend {
   border-left: 5px solid #f7c948;
+}
+
+.plane-card--reject {
+  border-left: 5px solid #e0655f;
 }
 
 .plane-card-title {
